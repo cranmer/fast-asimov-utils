@@ -5,8 +5,8 @@
 *License LGPL v2.1 (for ROOT compatibility, happy to make it BSD for other purposes)*
 
 
-*This code is underdevelopment. It should be useful, but don't use for anything official yet. 
-Will remove this after providing some validation*
+**This code is underdevelopment. It should be useful, but don't use for anything official yet.
+Will remove this after providing some validation**
 
 This code quickly calculates the expected 95% CLs upper limit on the number of
 signal events, `s`, given an expected background, `bExp`, and 
