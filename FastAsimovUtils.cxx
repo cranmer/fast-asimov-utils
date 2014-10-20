@@ -91,7 +91,7 @@ double ExpectedLimit(double bExp, double deltaB) {
 	double s=0.1;
 	while(CLs(bExp,bExp*tau,s,tau) < 0.95 )
 		s+=0.01;
-	cout << "hello " << s << endl;
+	cout << "Approximate expected 95% CLs upper-limit = " << s << endl;
 
 /*
 	CLsHelper helper;
