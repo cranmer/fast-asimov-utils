@@ -43,9 +43,13 @@ The ExpectedSignificance formulae was derived by Cowan and the numerical solutio
 for the Expected upper limit was written by Cranmer as correlaries to that paper.
 
 Note, the ExpectedSignificance euqation is the same as Eq.(17) of
+
  Tipei Li and Yuqian Ma, Astrophysical Journal 272 (1983) 317–324.
+
 and Eq.(25) of 
+
   Robert D. Cousins, James T. Linnemann and Jordan Tucker, NIM A 595 (2008) 480– 501; arXiv:physics/0702156.
+
 after making the replacements `n=bExp` and `m=bExp*tau`. 
 
 
