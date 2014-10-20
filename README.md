@@ -31,7 +31,8 @@ The derivations of these formulae are based on a statistical model:
 	Pois(n | s+b ) * Pois(m | tau * b)
 
 The tau quantity is calculated from `tau=bExp/deltaB/deltaB`.
-See arXiv:physics/0702156 for motivation of this model.
+See [arXiv:physics/0702156](http://arxiv.org/abs/physics/0702156) 
+for motivation of this model.
 The maximum likelihood estimate and conditional maximum likelihood estimate
 were solved analytically and coded here.
 The log-likelihood ratio and the profile log likelihood ratio follow immediately.
