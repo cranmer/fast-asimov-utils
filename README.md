@@ -8,7 +8,7 @@ This code quickly calculates the expected 95% CLs upper limit on the number of
 signal events, `s`, given an expected background, `bExp`, and 
 uncertainty on the background estimate, `deltaB`.
 The background uncertainty is absolute (not relative) and is uncertainty
-on the mean background (so you don't include Poisson fluctuatiosn in this number).
+on the mean background (so you don't include sqrt(bExp) Poisson fluctuations in this number).
 
 Example Usage: 
 
@@ -42,7 +42,7 @@ asymptotic distributions in
 The ExpectedSignificance formulae was derived by Cowan and the numerical solution 
 for the Expected upper limit was written by Cranmer as correlaries to that paper.
 
-Note, the ExpectedSignificance euqation is the same as Eq.(17) of
+Note, the ExpectedSignificance equation is the same as Eq.(17) of
 > Tipei Li and Yuqian Ma, Astrophysical Journal 272 (1983) 317–324.
 
 and Eq.(25) of 

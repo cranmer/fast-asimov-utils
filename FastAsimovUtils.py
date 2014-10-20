@@ -7,7 +7,7 @@ This code quickly calculates the expected 95% CLs upper limit on the number of
 signal events, s, given an expected background, bExp, and 
 uncertainty on the background estimate, deltaB.
 The background uncertainty is absolute (not relative) and is uncertainty
-on the mean background (so you don't include Poisson fluctuatiosn in this number).
+on the mean background (so you don't include sqrt(bExp) Poisson fluctuatiosn in this number).
 
 Example Usage: 
   * you expect 50 +/- 3 background events
