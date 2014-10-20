@@ -17,7 +17,7 @@ Example Usage:
   * `ExpectedLimit(50,7)`
   * returns s_95 = 19.7 events
 
-Similar code for expected discovery significance is also included
+Similar code for expected discovery significance is also included.
 
 Example Usage:
 
