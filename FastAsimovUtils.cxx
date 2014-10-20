@@ -110,6 +110,15 @@ double ExpectedLimit(double bExp, double deltaB) {
 
 }
 
+
+double ExpectedSignificance(double s, double b, double deltaB){
+	// same idea, but this is expected significance (in sigma)
+	return sqrt(2*( (s+b)*log( ((s+b)*(b+deltaB*deltaB)) / (b*b+(s+b)*deltaB*deltaB) )
+				-( b*b/deltaB/deltaB)*log(1.+ (s*deltaB*deltaB)/(b*(b+deltaB*deltaB)) ) 
+				  )
+			);
+}
+
 void tests(){
 
 	if(	shat(100,50,1)==50)
