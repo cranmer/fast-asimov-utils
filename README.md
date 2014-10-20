@@ -5,9 +5,6 @@
 *License LGPL v2.1 (for ROOT compatibility, happy to make it BSD for other purposes)*
 
 
-**This code is underdevelopment. It should be useful, but don't use for anything official yet.
-Will remove this after providing some validation**
-
 This code quickly calculates the expected 95% CLs upper limit on the number of
 signal events, `s`, given an expected background, `bExp`, and 
 uncertainty on the background estimate, `deltaB`.
@@ -54,11 +51,17 @@ and Eq.(25) of
 
 after making the replacements `n=bExp` and `m=bExp*tau`. 
 
+## Validation
+
+This code could use more validation, but there are a series of tests that run that check against results from the mathematica notebook and the equivalent HistFactory example.
+The HistFactory validation is in the directory `validation` and includes:
+   * A HistFactory model in xml that defines the statistical model above
+   * The top-level script `makeHists.C` that writes histograms to file `data/histograms.root` based on the values of `bExp` and `deltaB`, then runs HistFactory's `hist2workspace` + `RooStats/StandardHypoTestInvDemo.C` with the `AsymptoticCalculator` using the 1-sided profile likelihood ratio test statistic and CLs=True.
+
 
 ## To Do
 
 This is a work in progress!
-   * validation tests are underway
    * C++ to be updated to use Brent q root finding instead of simple scan
    * Could remove ROOT dependency in C++ verison entirely
    * add +/- 1,2 sigma bands for the expected upper limit
