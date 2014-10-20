@@ -15,9 +15,9 @@ Example Usage:
 
 Similar code for expected discovery significance is also included
 Example Usage:
-	* you expect 50 signal events, 100 +/- 7 background events
-	* ExpectedSignificance(50,100,7)
-	* returns 3.72 sigma
+  * you expect 50 +/- 7 background events
+  * ExpectedLimit(50,7)
+  * returns s_95 = 19.7 events
 
 The derivations of these formulae are based on a statistical model:
 	Pois(n | s+b ) * Pois(m | tau * b)
@@ -60,14 +60,6 @@ double bhat(double n, double m, double tau){
 	return m/tau;
 }
 
-double sigma(double n, double m, double s, double tau){
-	return 8*m*n*pow(1+tau,2)*
-	(m*m+2*m*n+n*n+m*s-n*s+m*s*tau-n*s*tau+(n+m)*sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)))
-	/sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2))
-	/pow(m+n-s-s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2)
-	/pow(m+n+s+s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2);	
-
-}
 
 double logL(double n, double m, double s, double b, double tau){
 	return (s+b) - n * log(s+b) + (tau*b) - m * log(tau*b);
@@ -78,17 +70,38 @@ double logLambda(double n, double m, double s, double tau){
 		- logL(n,m,shat(n,m,tau), bhat(n,m,tau), tau);
 }
 
+double sigma(double n, double m, double s, double tau){
+	double fisher = 8*m*n*pow(1+tau,2)* 
+		(m*m+2*m*n+n*n+m*s-n*s+m*s*tau-n*s*tau+(n+m)*sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2))) 
+		/sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)) 
+		/pow(m+n-s-s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2) 
+		/pow(m+n+s+s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2) ;
+	//from asimov approach
+	if(s>0 && logLambda(n,m,s,tau) > 0 )
+		return s/sqrt(2.*logLambda(n,m,s,tau));
+	else
+		return 1./sqrt(fisher)	;
+
+}
+
 double F(double qmu, double mu, double muprime, double sigma){
-	return ROOT::Math::normal_cdf(sqrt(qmu)-(mu-muprime)/sigma);
+	if(qmu < mu*mu/sigma/sigma){
+		//print "s = ", mu, "using first part", qmu, " ", sigma
+		//print "debug ", sqrt(qmu), (mu-muprime)/sigma
+		return ROOT::Math::normal_cdf(sqrt(qmu)-(mu-muprime)/sigma);
+	} else{
+		//print "s = ", mu, "using second part", qmu, " ", sigma
+		return ROOT::Math::normal_cdf( (qmu-(mu*mu-2*mu*muprime)/sigma/sigma) / (2*mu/sigma) );
+	}
 }
 
 double CLs(double n, double m, double s, double tau){
 	double qmu = 2*logLambda(n,m,s,tau);
 	double sig = sigma(n,m,s,tau);
 	if(shat(n,m,tau) > s)
-		return 0.5;
+		qmu=0.;
 
-	return F(qmu,s,s,sig)/(1-F(qmu,s,0,sig));
+	return (1.-F(qmu,s,s,sig))/(1.-F(qmu,s,0,sig));
 }
 
 // function class with a member function for root finder
@@ -107,23 +120,24 @@ double ExpectedLimit(double bExp, double deltaB) {
 	double tau = bExp/deltaB/deltaB;
 
 	double s=0.1;
-	while(CLs(bExp,bExp*tau,s,tau) < 0.95 )
+	while(CLs(bExp,bExp*tau,s,tau) > 0.05 )
 		s+=0.01;
-	cout << "Approximate expected 95% CLs upper-limit = " << s << endl;
+	//cout << "Approximate expected 95% CLs upper-limit = " << s << endl;
 
-/*
+	/*
+	// to do, add a real root finder algorithm here
 	CLsHelper helper;
 	helper.n=bExp;
 	helper.m=bExp*tau;
 	helper.tau=tau;
 
-	ROOT::Math::Functor1D thisFunc(helper, &(helper.evalCLs));
+	ROOTMathFunctor1D thisFunc(helper, &(helper.evalCLs));
 
- 	ROOT::Math::Functor1D f1D(&thisFunc);
+ 	ROOTMathFunctor1D f1D(&thisFunc);
 
-	ROOT::Math::BrentRootFinder brf;
+	ROOTMathBrentRootFinder brf;
 	brf.SetFunction(f1D);
-*/
+	*/
 	return s;
 
 }
@@ -154,7 +168,7 @@ void tests(){
 	else
 		cout << "oops" << endl;
 
-	if(	149 < 1/sigma(100,50,50,1) && 1/sigma(100,50,50,1) <151)
+	if(	12.2 < sigma(100,50,50,1) && sigma(100,50,50,1) <12.3)
 		cout << "ok" << endl;
 	else
 		cout << "oops" << endl;
@@ -163,6 +177,26 @@ void tests(){
 		cout << "ok" << endl;
 	else
 		cout << "oops" << endl;
+
+	if(ExpectedSignificance(50,100,10)>3. && ExpectedSignificance(50,100,10)<3.2)
+		cout <<   "ok" << "approximate significance for s=50,b=100+/-10 is" <<  ExpectedSignificance(50,100,10) << endl;
+	else
+		cout <<   "oops" << endl; 
+
+	if(ExpectedLimit(50,7)>19.7 && ExpectedLimit(50,7)<19.8 )
+		cout <<   "ok " <<  "approximate limit for 50+/-7 is " << ExpectedLimit(50,7) << endl;
+	else
+		cout <<   "oops" << endl; 
+
+	if(	ExpectedLimit(100,.1)>20. && ExpectedLimit(100,.1)<21 )
+		cout <<   "ok " << "approximate limit for 100+/-0.1 is " << ExpectedLimit(100,0.1) << endl;
+	else
+		cout <<   "oops" << endl; 
+
+	if(	ExpectedLimit(50,50)>51 && ExpectedLimit(50,50)<53 )
+		cout <<   "ok " << "approximate limit for 50+/-50 is " << ExpectedLimit(50,50)  << endl;
+	else
+		cout <<   "oops" << endl; 
 
 }
 

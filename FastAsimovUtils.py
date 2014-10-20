@@ -10,9 +10,9 @@ The background uncertainty is absolute (not relative) and is uncertainty
 on the mean background (so you don't include sqrt(bExp) Poisson fluctuatiosn in this number).
 
 Example Usage: 
-  * you expect 50 +/- 3 background events
-  * ExpectedLimit(50,3)
-  * returns s_95 = 13.4 events
+  * you expect 50 +/- 7 background events
+  * ExpectedLimit(50,7)
+  * returns s_95 = 19.7 events
 
 Similar code for expected discovery significance is also included
 Example Usage:
