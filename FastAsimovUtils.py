@@ -26,6 +26,7 @@ asymptotic distributions in Eur. Phys. J. C 71 (2011) 1554.  arXiv:1007.1727
 
 from __future__ import division
 from scipy.stats import norm
+from scipy.optimize import brentq
 from numpy import sqrt, log
 
 def bhathat(n, m, s, tau):
@@ -81,19 +82,28 @@ class CLsHelper() :
 	
 '''
 
+def CLsArgumentWrapper(s,n,m,tau):
+	return CLs(n,m,s,tau)-0.95
 
 
 def ExpectedLimit(bExp, deltaB) :
 
 	tau = bExp/deltaB/deltaB
 
-	s=0.1
-	while CLs(bExp,bExp*tau,s,tau) < 0.95 :
-		s+=0.01
-	#print "Approximate expected 95% CLs upper-limit = ", s 
+	xhi = 3*sqrt(bExp)+3*deltaB #a reasonable guess of what is larger than the upper limit
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp,bExp*tau,tau))
+		print "Approximate expected 95% CLs upper-limit = ", s 
+	except:
+		print "brentq failed (boundaries?) using a simple scan"
+		s=0.01
+		while CLs(bExp,bExp*tau,s,tau) < 0.95 :
+			s+=0.1
+		print "Approximate expected 95% CLs upper-limit = ", s 
+		return s
+ 
 
 	# use http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
-	return s
 
 
 
