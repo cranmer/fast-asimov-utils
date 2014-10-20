@@ -1,8 +1,8 @@
 # Fast Asimov Utils
 
-*Kyle Cranmer & Glen Cowan *
+*Kyle Cranmer & Glen Cowan*
 
-*License LGPL v2.1 (for ROOT compatibility, happy to make it BSD for other purposes) *
+*License LGPL v2.1 (for ROOT compatibility, happy to make it BSD for other purposes)*
 
 This code quickly calculates the expected 95% CLs upper limit on the number of
 signal events, `s`, given an expected background, `bExp`, and 
