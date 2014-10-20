@@ -20,8 +20,12 @@ The maximum likelihood estimate and conditional maximum likelihood estimate
 were solved analytically and coded here.
 The log-likelihood ratio and the profile log likelihood ratio follow immediately.
 The b-only and s+b p-values needed for CLs are calculated using the 
-asymptotic distributions in Eur. Phys. J. C 71 (2011) 1554.  arXiv:1007.1727
-
+asymptotic distributions in 
+	Cowan, Cranmer, Gross, Vitells,
+	Eur. Phys. J. C 71 (2011) 1554.  
+	arXiv:1007.1727.
+The ExpectedSignificance formulae was derived by Cowan and the numerical solution 
+for the Expected upper limit was written by Cranmer as correlaries to that paper.
  *************************************************************************/
 
 
