@@ -27,6 +27,12 @@ makeHist(double bExp, double deltaB){
  	gSystem->Exec("hist2workspace config/example_DataDriven.xml");
  	gSystem->Load("$ROOTSYS/tutorials/roostats/StandardHypoTestInvDemo.C");
 	StandardHypoTestInvDemo("results/example_DataDriven_combined_GaussExample_model.root", "combined", "ModelConfig","","obsData",2,3,true,10,0,2*sqrt(bExp)+2*deltaB);
-
-
   }
+
+void makeHists(){
+	runAll(50,7);
+	runAll(100,0.1);
+	runAll(50,50);
+
+
+}
