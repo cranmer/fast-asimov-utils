@@ -59,3 +59,6 @@ This is a work in progress!
    * Could remove ROOT dependency in C++ verison entirely
    * add +/- 1,2 sigma bands for the expected upper limit
    * could do same for observed upper limit.
+
+Extension:
+   * Include uncertainty on signal efficiency for upper limit. Those equations are big! (See ExpectedLimitWithSignalUncert.nb)
