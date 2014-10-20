@@ -4,6 +4,10 @@
 
 *License LGPL v2.1 (for ROOT compatibility, happy to make it BSD for other purposes)*
 
+
+*This code is underdevelopment. It should be useful, but don't use for anything official yet. 
+Will remove this after providing some validation*
+
 This code quickly calculates the expected 95% CLs upper limit on the number of
 signal events, `s`, given an expected background, `bExp`, and 
 uncertainty on the background estimate, `deltaB`.
@@ -54,7 +58,7 @@ after making the replacements `n=bExp` and `m=bExp*tau`.
 ## To Do
 
 This is a work in progress!
-   * some validation tests.
+   * validation tests are underway
    * C++ to be updated to use Brent q root finding instead of simple scan
    * Could remove ROOT dependency in C++ verison entirely
    * add +/- 1,2 sigma bands for the expected upper limit

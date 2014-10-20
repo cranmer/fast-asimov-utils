@@ -36,9 +36,9 @@ The ExpectedSignificance formulae was derived by Cowan and the numerical solutio
 for the Expected upper limit was written by Cranmer as correlaries to that paper.
 
 Note, the ExpectedSignificance euqation is the same as Eq.(17) of
- Tipei Li and Yuqian Ma, Astrophysical Journal 272 (1983) 317–324.
-and Eq.(25) of 
-Robert D. Cousins, James T. Linnemann and Jordan Tucker, NIM A 595 (2008) 480– 501; arXiv:physics/0702156.
+Tipei Li and Yuqian Ma, Astrophysical Journal 272 (1983) 317-324
+and Eq.(25) of
+Robert D. Cousins, James T. Linnemann and Jordan Tucker, NIM A 595 (2008) 480-501; arXiv:physics/0702156.
 after making the replacements n=bExp and m=bExp*tau. 
 '''
 
@@ -60,11 +60,12 @@ def bhat(n, m, tau):
 
 
 def sigma(n, m, s, tau):
-	return 8*m*n*pow(1+tau,2)* \
+	fisher = 8*m*n*pow(1+tau,2)* \
 		(m*m+2*m*n+n*n+m*s-n*s+m*s*tau-n*s*tau+(n+m)*sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2))) \
 		/sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)) \
 		/pow(m+n-s-s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2) \
 		/pow(m+n+s+s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2) 
+	return 1/sqrt(fisher)
 
 
 def logL(n, m, s, b, tau):
@@ -77,7 +78,12 @@ def logLambda(n, m, s, tau):
 
 
 def F(qmu, mu, muprime, sigma):
-	return norm.cdf(sqrt(qmu)-(mu-muprime)/sigma)
+	if qmu<mu*mu/sigma/sigma :
+		#print "s = ", mu, "using first part", qmu, " ", sigma
+		return norm.cdf(sqrt(qmu)-(mu-muprime)/sigma)
+	else:
+		#print "s = ", mu, "using second part", qmu, " ", sigma
+		return norm.cdf( (qmu-(mu*mu-2*mu*muprime)/sigma/sigma) / (2*mu/sigma) )
 
 
 def CLs(n, m, s, tau):
@@ -86,7 +92,9 @@ def CLs(n, m, s, tau):
 	if shat(n,m,tau) > s :
 		return 0.5
 
-	return F(qmu,s,s,sig)/(1-F(qmu,s,0,sig))
+	print "CLb = ", (1-F(qmu,s,0.001,sig))
+	print "CLsb = ", F(qmu,s,s,sig)
+	return F(qmu,s,s,sig)/(1-F(qmu,s,0.001,sig))
 
 
 #
