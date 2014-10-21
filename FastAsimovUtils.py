@@ -69,6 +69,12 @@ def logLambda(n, m, s, tau):
 	return logL(n, m, s, bhathat(n,m,s,tau), tau)  \
 		- logL(n,m,shat(n,m,tau), bhat(n,m,tau), tau)
 
+def sigma_v2(s, bExp, tau):
+
+	#from asimov approach
+	if s>0 and logLambda(s+bExp,bExp*tau,s,tau) > 0:
+		return float(s)/sqrt(2.*logLambda(s+bExp,bExp*tau,s,tau))
+
 def sigma(n, m, s, tau):
 
 	#from fisher information matrix approach
@@ -103,10 +109,10 @@ def CLs(n, m, s, tau):
 		print "hit boundary"
 		qmu=0
 
-	#print "\ns = ", s, "qmu = ", qmu, "cutoff", s*s/sig/sig
+	print "\ns = ", s, "qmu = ", qmu, "cutoff", s*s/sig/sig
 	#print "sigma = ", sig
-	#print "CLb = ", (1-F(qmu,s,0.,sig))
-	#print "CLsb = ", F(qmu,s,s,sig)
+	print "CLb = ", (1-F(qmu,s,0.,sig))
+	print "CLsb = ", F(qmu,s,s,sig)
 	return (1.-F(qmu,s,s,sig))/(1-F(qmu,s,0.0,sig))
 
 
@@ -143,8 +149,61 @@ def ExpectedLimit(bExp, deltaB) :
 		return s
  
 
-	# use http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
+def ExpectedLimitWithBands(bExp, deltaB) :
+	# WARNING: This function isn't working yet.
+	# I think that sigma function should just be based on s,tau not n,m
 
+
+	tau = bExp/deltaB/deltaB
+
+	expLim=0
+	p1sig=0
+	p2sig=0
+	m1sig=0
+	m2sig=0
+	xhi = 3*sqrt(bExp)+3*deltaB #a reasonable guess of what is larger than the upper limit
+
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp,bExp*tau,tau))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		expLim=s
+	except:
+		print "failure"
+
+	sig=sigma(bExp,bExp*tau,s,tau)
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp+1*sig,bExp*tau,tau))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		p1sig=s
+	except:
+		print "failure"
+
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp+2*sig,bExp*tau,tau))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		p2sig=s
+	except:
+		print "failure"
+
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp-1*sig,bExp*tau,tau))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		m1sig=s
+	except:
+		print "failure"
+
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp-2*sig,bExp*tau,tau))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		m2sig=s
+	except:
+		print "failure"
+
+	print "expected Limit (median)", expLim
+	print "expected Limit (-1sigma)", m1sig
+	print "expected Limit (+1sigma)", p1sig
+	print "expected Limit (-2sigma)", m2sig
+	print "expected Limit (+2sigma)", p2sig
 
 
 
@@ -203,4 +262,6 @@ if __name__ == '__main__':
 		print  "ok", "approximate limit for 50+/-50 is", ExpectedLimit(50,50) 
 	else:
 		print  "oops" 
+
+	ExpectedLimitWithBands(50,7)
 

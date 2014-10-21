@@ -5,10 +5,18 @@
 *License LGPL v2.1 (for ROOT compatibility, happy to make it BSD for other purposes)*
 
 
-This code quickly calculates the expected 95% CLs upper limit on the number of
+This code quickly calculates expected discovery significance and upper limits 
+based on an expected signal `sExp`, expected background, `bExp`, and uncertainty on the 
+background estimate, `deltaB`. In this situation, most of the problem can be done
+analytically, and no minimization algorithms are necessary. Observed versions and 
++/- 1,2 sigma bands on the expected limit are in the works.
+
+
+### Expected Limit
+
+The expected 95% CLs upper limit on the number of
 signal events, `s`, given an expected background, `bExp`, and 
-uncertainty on the background estimate, `deltaB`.
-The background uncertainty is absolute (not relative) and is uncertainty
+uncertainty on the background estimate, `deltaB`. The background uncertainty is absolute (not relative) and is uncertainty
 on the mean background (so you don't include sqrt(bExp) Poisson fluctuations in this number).
 
 Example Usage: 
@@ -16,6 +24,8 @@ Example Usage:
   * you expect 50 +/- 7 background events
   * `ExpectedLimit(50,7)`
   * returns s_95 = 19.7 events
+
+### Expected Significance
 
 Similar code for expected discovery significance is also included.
 
@@ -25,11 +35,15 @@ Example Usage:
    * `ExpectedSignificance(50,100,7)`
    * returns 3.72 sigma
 
+## Details
 
 The derivations of these formulae are based on a statistical model:
 
 	Pois(n | s+b ) * Pois(m | tau * b)
 
+The first term is the standard "number counting" signal region.
+The second term is a idealized auxiliary measurement used to 
+constrain the background resulting in some characteristic relative uncertainty.
 The tau quantity is calculated from `tau=bExp/deltaB/deltaB`.
 See [arXiv:physics/0702156](http://arxiv.org/abs/physics/0702156) 
 for motivation of this model.
@@ -64,9 +78,10 @@ The HistFactory validation is in the directory `validation` and includes:
 
 This is a work in progress!
    * C++ to be updated to use Brent q root finding instead of simple scan
-   * Could remove ROOT dependency in C++ verison entirely
+   * remove ROOT dependency in C++ verison entirely?
    * add +/- 1,2 sigma bands for the expected upper limit
    * could do same for observed upper limit.
+   * add a Mathematica version
 
 Extension:
    * Include uncertainty on signal efficiency for upper limit. Those equations are big! (See ExpectedLimitWithSignalUncert.nb)
