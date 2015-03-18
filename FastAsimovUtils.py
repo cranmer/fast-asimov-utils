@@ -45,7 +45,7 @@ after making the replacements n=bExp and m=bExp*tau.
 from __future__ import division
 from scipy.stats import norm
 from scipy.optimize import brentq
-from numpy import sqrt, log
+from numpy import sqrt, log, abs
 
 def bhathat(n, m, s, tau):
 	return (m+n-s-s*tau + sqrt(4*m*s*(1+tau) + pow(s+s*tau-m-n,2) ) ) / (2 * (1+tau )) 
@@ -57,9 +57,6 @@ def shat(n, m, tau):
 
 def bhat(n, m, tau):
 	return m/tau
-
-
-
 
 def logL(n, m, s, b, tau):
 	return (s+b) - n * log(s+b) + (tau*b) - m * log(tau*b)
@@ -92,7 +89,12 @@ def F(qmu, mu, muprime, sigma):
 		return norm.cdf(sqrt(qmu)-(mu-muprime)/sigma)
 	else:
 		#print "s = ", mu, "using second part", qmu, " ", sigma
-		return norm.cdf( (qmu-(mu*mu-2*mu*muprime)/sigma/sigma) / (2*mu/sigma) )
+		return norm.cdf( (qmu-(mu*mu-2.*mu*muprime)/sigma/sigma) / (2.*mu/sigma) )
+
+
+def CLs_qmu(qmu, s, sig):
+	#print "double scalar?", qmu, s, sig, (1.-F(qmu,s,s,sig)), (1.-F(qmu,s,0.0,sig))
+	return (1.-F(qmu,s,s,sig))/(1.-F(qmu,s,0.0,sig))
 
 
 def CLs(n, m, s, tau):
@@ -110,41 +112,107 @@ def CLs(n, m, s, tau):
 	return (1.-F(qmu,s,s,sig))/(1-F(qmu,s,0.0,sig))
 
 
-#
-'''
-class CLsHelper() : 
-	n=0
-	m=0
-	tau=0
-	evalCLs (s ) const : 
-   		return CLs(n,m,s,tau)
-	
-'''
-
 def CLsArgumentWrapper(s,n,m,tau):
 	return CLs(float(n),float(m),float(s),float(tau))-0.05
+
+def CLsArgumentWrapper_qmu(s, bExp, deltaB, sigmaBand):
+	tau = bExp/deltaB/deltaB
+	sig = sigma(bExp,bExp*tau,s,tau)
+	qmu = qmuBand(s, bExp, deltaB, sigmaBand)
+	return CLs_qmu(float(qmu),float(s),float(sig))-0.05
+
+def CLbArgumentWrapper(qmu, s,n,m,tau,sigmaBand):
+	#using this to find value of q_mu that for sigmaBand of the s=0 distribution as a function of mu=s
+	clbForBand = 1.-norm.cdf( sigmaBand)
+	sig = sigma(n,m,s,tau)
+	#sig = sigma(n,m,0.,tau)
+	if s==0: #qmu is a delta function when mu=0
+		print "qmu is a delta function when mu=0"
+		return 1.;
+	return F(float(qmu),float(s),float(0),float(sig))-clbForBand
+
+def qmuBand(s, bExp, deltaB, sigmaBand) :
+	# the value of q_mu that corresponds to the (-2,-1,0,1,2)sigmaBand of b-only for a hypothesized mu=s
+	tau = bExp/deltaB/deltaB
+	sig = sigma(bExp,bExp*tau,s,tau)
+	xhi = (3*s/sig)**2 # a reasonable guess, but it breaks down for very small s near 0
+	if xhi<0.01: xhi=0.01  # hack patch for small s
+	xlo = xhi/100.
+	try:
+		qmuBand = brentq(CLbArgumentWrapper, xlo, xhi, args=(s,bExp,bExp*tau,tau,sigmaBand))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		return qmuBand
+	except:
+		if F(float(0),float(s),float(0),float(sig)) > norm.cdf(sigmaBand):
+			print "\n   brentq failed to find qmuBand, using a simple scan", xlo, xhi
+			print "   P(delta)", F(float(0),float(s),float(0),float(sig)) , "CLb target =", norm.cdf(sigmaBand)
+			print "   CLbArgumentWrapper", (s,bExp,bExp*tau,tau,sigmaBand)
+
+		qmuBand=xlo
+		#print "\n\ts, bExp, bexp*tau, sigmaBand", s,bExp,bExp*tau,tau,sigmaBand
+		#print 'clb(0) = ', CLbArgumentWrapper(0, s, bExp,bExp*tau,tau, sigmaBand)
+		#print 'clb(0.001) = ', CLbArgumentWrapper(0.001, s, bExp,bExp*tau,tau, sigmaBand)
+		while CLbArgumentWrapper(qmuBand, s, bExp,bExp*tau,tau, sigmaBand) < 0.001 :
+			qmuBand+=0.01
+		#print "\n\tApproximate qmuBand = ", qmuBand
+		return qmuBand
 
 
 def ExpectedLimit(bExp, deltaB) :
 
 	tau = bExp/deltaB/deltaB
-
 	xhi = 3*sqrt(bExp)+3*deltaB #a reasonable guess of what is larger than the upper limit
 	try:
 		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(bExp,bExp*tau,tau))
 		#print "Approximate expected 95% CLs upper-limit = ", s 
 		return s
 	except:
+		print "\n\tbrentq failed (boundaries?) using a simple scan"
+		s=0.001
+		while CLs(bExp,bExp*tau,s,tau) < 0.95 :
+			s+=0.01
+		print "\n\tApproximate expected 95% CLs upper-limit = ", s 
+		return s
+	# use http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
+
+
+def ExpectedLimitBand(bExp, deltaB, sigmaBand) :
+	xhi = 3*sqrt(bExp)+3*deltaB #a reasonable guess of what is larger than the upper limit
+	try:
+		s = brentq(CLsArgumentWrapper_qmu, 0.001, xhi, args=(bExp, deltaB, sigmaBand))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		return s
+	except:
+		print "\n\tbrentq failed (boundaries?) using a simple scan"
+		s=0.001
+		while abs(CLsArgumentWrapper_qmu(s, bExp, deltaB, sigmaBand)) < 0.001 :
+			s+=0.01
+		print "\n\tCLsArgumentWrapper_qmu", (s, bExp, deltaB, sigmaBand)
+		print "\n\tApproximate ", sigmaBand, " 95% CLs upper-limit = ", s 
+		return s
+ 
+
+
+
+def ObservedLimit(nObs, bExp, deltaB) :
+
+	tau = bExp/deltaB/deltaB
+
+	xhi = 3*sqrt(bExp)+3*deltaB #a reasonable guess of what is larger than the upper limit
+	try:
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(nObs,bExp*tau,tau))
+		#print "Approximate expected 95% CLs upper-limit = ", s 
+		return s
+	except:
 		print "brentq failed (boundaries?) using a simple scan"
 		s=0.01
-		while CLs(bExp,bExp*tau,s,tau) < 0.95 :
+		while CLs(nObs,bExp*tau,s,tau) < 0.95 :
 			s+=0.1
 		print "Approximate expected 95% CLs upper-limit = ", s 
 		return s
  
 
 	# use http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
-
 
 
 
@@ -155,8 +223,52 @@ def ExpectedSignificance(s, b, deltaB):
 				  )
 			)
 
+def ExpectedSignificance2(s, b, deltaB):
+	tau = b/deltaB/deltaB
+	q0 = 2.*logLambda(n=s+b,m=tau*b,s=0.,tau=tau)
+	print q0, tau
+	return sqrt(q0)
+
+def ObservedSignificance(n, b, deltaB):
+	tau = b/deltaB/deltaB
+	q0 = 2.*logLambda(n=n,m=tau*b,s=0.,tau=tau)
+	print q0, tau
+	return sqrt(q0)
+
+
+def ObsExpAndBands_Limits(nObs,bExp,deltaB):
+	ol = ObservedLimit(nObs,bExp,deltaB)
+	el = ExpectedLimit(bExp,deltaB)
+	el_m2 = ExpectedLimitBand(bExp,deltaB,-2.)
+	el_m1 = ExpectedLimitBand(bExp,deltaB,-1.)
+	el_p1 = ExpectedLimitBand(bExp,deltaB,1.)
+	el_p2 = ExpectedLimitBand(bExp,deltaB,2.)
+	return (ol,  el_m2, el_m1, el, el_p1, el_p2)
 
 if __name__ == '__main__':
+
+	print 'qmuband(-1) = ', qmuBand(10, 100., 1., -1.)
+	print 'qmuband(0) = ', qmuBand(10, 100., 1., 0.)
+	print 'qmuband(+0.5) = ', qmuBand(10, 100., 1., 0.5)
+	print 'qmuband(+0.8) = ', qmuBand(10, 100., 1., 0.8)
+	print 'qmuband(+0.9) = ', qmuBand(10, 100., 1., 0.9)
+	print 'qmuband(+0.95) = ', qmuBand(10, 100., 1., 0.95)
+	print 'qmuband(1) = ', qmuBand(10, 100., 1., 1.)
+
+
+	print '-2*logLambda = ', 2*logLambda(100, 100.*100., 10., 100)
+	print '-2*logLambda(93,100) = ', 2*logLambda(93, 100.*100.-sqrt(100.*100./2.), 10., 100) #rough approx
+
+	print 'expected limit ', ExpectedLimit(100, 1.) 
+	print 'expected limit -1',ExpectedLimitBand(100, 1., -1.) 
+	print 'expected limit 0',ExpectedLimitBand(100., 1., 0.) 
+	print 'expected limit +0.5',ExpectedLimitBand(100, 1., 0.5) 
+	#print 'expected limit +0.3',ExpectedLimitBand(100, 1., 0.3) 
+	#print 'expected limit +0.5',ExpectedLimitBand(100, 1., 0.5) 
+	#print 'expected limit +0.7',ExpectedLimitBand(100, 1., 0.7) 
+	print 'expected limit +1',ExpectedLimitBand(100, 1., 1.) 
+
+	#careful if shat(nsigma)> s
 
 	print "running some tests"
 	if	shat(100,50,1)==50 :
