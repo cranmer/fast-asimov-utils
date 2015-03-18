@@ -4,3 +4,5 @@
 *.d
 
 *.so
+
+.ipynb_checkpoints/*
