@@ -1,0 +1,7 @@
+setup.py
+fasimov/__init__.py
+fasimov.egg-info/PKG-INFO
+fasimov.egg-info/SOURCES.txt
+fasimov.egg-info/dependency_links.txt
+fasimov.egg-info/requires.txt
+fasimov.egg-info/top_level.txt
