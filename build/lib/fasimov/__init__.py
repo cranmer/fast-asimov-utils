@@ -66,23 +66,29 @@ def logLambda(n, m, s, tau):
 	return logL(n, m, s, bhathat(n,m,s,tau), tau)  \
 		- logL(n,m,shat(n,m,tau), bhat(n,m,tau), tau)
 
-def sigma(n, m, s, tau):
-
+def fisher(n,m,s,tau):
 	#from fisher information matrix approach
-	fisher = 8*m*n*pow(1+tau,2)* \
+	return 8*m*n*pow(1+tau,2)* \
 		(m*m+2*m*n+n*n+m*s-n*s+m*s*tau-n*s*tau+(n+m)*sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2))) \
 		/sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)) \
 		/pow(m+n-s-s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2) \
 		/pow(m+n+s+s*tau+sqrt(4*m*s*(1+tau)+pow(m+n-s*(1+tau),2)),2) 
+
+def sigma(n, m, s, tau):
+
 	#print "sigma_fisher = ", 1./sqrt(fisher), "sig_asimov", float(s)/sqrt(2.*logLambda(n,m,s,tau))
 	#from asimov approach
 	if s>0 and logLambda(n,m,s,tau) > 0:
+		#print "sigma from qmu"
 		return float(s)/sqrt(2.*logLambda(n,m,s,tau))
 	else:
-		return 1./sqrt(fisher)
+		#print "sigma from fisher", s, logLambda(n,m,s,tau), 1/fisher(n,m,s,tau)
+		return 1./fisher(m*tau+s,m,s,tau)
 
 
 def F(qmu, mu, muprime, sigma):
+	#print "debug mu=%f mu'=%f, sigma=%f, qmu=%f, dist_to_boundary = %e" %(mu, muprime, sigma, qmu, qmu-mu*mu/sigma/sigma )
+
 	if qmu<mu*mu/sigma/sigma :
 		#print "s = ", mu, "using first part", qmu, " ", sigma
 		#print "debug ", sqrt(qmu), (mu-muprime)/sigma
@@ -109,8 +115,10 @@ def CLs(n, m, s, tau):
 	#print "sigma = ", sig
 	#print "CLb = ", (1-F(qmu,s,0.,sig))
 	#print "CLsb = ", F(qmu,s,s,sig)
-	return (1.-F(qmu,s,s,sig))/(1-F(qmu,s,0.0,sig))
+	return (1.-F(qmu,s,s,sig))/(1.-F(qmu,s,0.0,sig))
 
+def testReload():
+	print "4"
 
 def CLsArgumentWrapper(s,n,m,tau):
 	return CLs(float(n),float(m),float(s),float(tau))-0.05
@@ -130,6 +138,19 @@ def CLbArgumentWrapper(qmu, s,n,m,tau,sigmaBand):
 		print "qmu is a delta function when mu=0"
 		return 1.;
 	return F(float(qmu),float(s),float(0),float(sig))-clbForBand
+
+def CLb(n,m,s,tau):
+		#sig = sigma(n,m,s,tau)
+	sig = sigma(n,m,s,tau)
+	qmu = 2.*logLambda(n,m,s,tau)
+	if shat(n,m,tau) >= s :
+		print "hit boundary"
+		qmu=0
+
+	if s==0: #qmu is a delta function when mu=0
+		print "qmu is a delta function when mu=0"
+		return 1.;
+	return F(float(qmu),float(s),float(0),float(sig))
 
 def qmuBand(s, bExp, deltaB, sigmaBand) :
 	# the value of q_mu that corresponds to the (-2,-1,0,1,2)sigmaBand of b-only for a hypothesized mu=s
@@ -194,19 +215,19 @@ def ExpectedLimitBand(bExp, deltaB, sigmaBand) :
 
 
 
-def ObservedLimit(nObs, bExp, deltaB) :
+def ObservedLimit(n, bExp, deltaB) :
 
 	tau = bExp/deltaB/deltaB
 
 	xhi = 3*sqrt(bExp)+3*deltaB #a reasonable guess of what is larger than the upper limit
 	try:
-		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(nObs,bExp*tau,tau))
+		s = brentq(CLsArgumentWrapper, 0.001, xhi, args=(n,bExp*tau,tau))
 		#print "Approximate expected 95% CLs upper-limit = ", s 
 		return s
 	except:
 		print "brentq failed (boundaries?) using a simple scan"
 		s=0.01
-		while CLs(nObs,bExp*tau,s,tau) < 0.95 :
+		while CLs(n,bExp*tau,s,tau) < 0.95 :
 			s+=0.1
 		print "Approximate expected 95% CLs upper-limit = ", s 
 		return s
@@ -236,8 +257,8 @@ def ObservedSignificance(n, b, deltaB):
 	return sqrt(q0)
 
 
-def ObsExpAndBands_Limits(nObs,bExp,deltaB):
-	ol = ObservedLimit(nObs,bExp,deltaB)
+def ObsExpAndBands_Limits(n,bExp,deltaB):
+	ol = ObservedLimit(n,bExp,deltaB)
 	el = ExpectedLimit(bExp,deltaB)
 	el_m2 = ExpectedLimitBand(bExp,deltaB,-2.)
 	el_m1 = ExpectedLimitBand(bExp,deltaB,-1.)
